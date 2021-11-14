@@ -1,0 +1,189 @@
+' Created By: BAQI
+' Date Created: 14/11/2021
+' Medium For: Excel Macro (VBA)
+
+
+Private Sub UpdateD03()
+
+    'update the Y File
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZS%3DF/history?p=ZS%3DF", "^ZS")
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZM%3DF/history?p=ZM%3DF", "^ZM")
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZL%3DF/history?p=ZL%3DF", "^ZL")
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZW%3DF/history?p=ZW%3DF", "^ZW")
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZC%3DF/history?p=ZC%3DF", "^ZC")
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZO%3DF/history?p=ZO%3DF", "^ZO")
+    Call OpenAndUpdateFromUrl("https://finance.yahoo.com/quote/ZR%3DF/history?p=ZR%3DF", "^ZR")
+    
+    'notification send to user
+    MsgBox "Done"
+    
+End Sub
+
+
+Private Sub OpenAndUpdateFromUrl(Url As String, columnupdate As String)
+
+Dim anchorcell As Range
+Dim rawdate As Range
+Dim rawupdate As String
+Dim RowUpdate As Integer
+
+  source_link = Url
+  
+  Set tempsheet = ActiveWorkbook.Worksheets.Add
+    tempsheet.Name = "temp"
+    Worksheets("temp").Activate
+
+    With ActiveSheet.QueryTables.Add(Connection:= _
+        "URL;" & source_link, _
+        Destination:=Range("A1"))
+        .Name = "temp"
+        .FieldNames = True
+        .RowNumbers = False
+        .FillAdjacentFormulas = False
+        .PreserveFormatting = True
+        .RefreshOnFileOpen = False
+        .BackgroundQuery = True
+        .RefreshStyle = xlInsertDeleteCells
+        .SavePassword = False
+        .SaveData = True
+        .AdjustColumnWidth = True
+        .RefreshPeriod = 0
+        .WebSelectionType = xlEntirePage
+        .WebFormatting = xlWebFormattingNone
+        .WebPreFormattedTextToColumns = True
+        .WebConsecutiveDelimitersAsOne = True
+        .WebSingleBlockTextImport = False
+        .WebDisableDateRecognition = False
+        .WebDisableRedirections = False
+        .Refresh BackgroundQuery:=False
+    End With
+    
+RowUpdate = 1
+
+While RowUpdate < 6
+
+    Worksheets("temp").Activate
+    Cells.Find(what:="Date", lookat:=xlWhole).Activate
+    Set rawdate = ActiveCell.Offset(RowUpdate, 0)
+    update_month = Left(rawdate, 3)
+    
+    Call ChangeMonthName(update_month)
+    
+    rawupdate = Mid(rawdate, 5, 2) & "/" & update_month & "/" & Right(rawdate, 4)
+    
+    update_date = CDate(Format(rawupdate, "dd/mm/yyyy"))
+    
+    Cells.Find(what:="Close*", lookat:=xlWhole).Activate
+    Set anchorcell = ActiveCell.Offset(RowUpdate, 0)
+    anchorcell.Select
+    anchorcell.Copy
+    
+    Set wb1 = ThisWorkbook
+    Set updateWS = wb1.Worksheets("D0-3")
+    updateWS.Activate
+    Set foundRng = updateWS.Cells.Find(update_date)
+    Set foundRngCol = updateWS.Cells.Find(columnupdate)
+    updateWS.Cells(foundRng.Row, foundRngCol.Column).PasteSpecial xlPasteValues
+    
+    colordata
+    
+    If columnupdate = "^ZR" Then
+        Call Divideby
+    End If
+    
+    RowUpdate = RowUpdate + 1
+
+Wend
+
+Application.DisplayAlerts = False
+Worksheets("temp").Delete
+Application.DisplayAlerts = True
+
+End Sub
+
+Private Sub ChangeMonthName(MonName As Variant)
+
+    If MonName = "Jan" Then
+        MonName = "01"
+    ElseIf MonName = "Feb" Then
+        MonName = "02"
+    ElseIf MonName = "Mar" Then
+        MonName = "03"
+    ElseIf MonName = "Apr" Then
+        MonName = "04"
+    ElseIf MonName = "May" Then
+        MonName = "05"
+    ElseIf MonName = "Jun" Then
+        MonName = "06"
+    ElseIf MonName = "Jul" Then
+        MonName = "07"
+    ElseIf MonName = "Aug" Then
+        MonName = "08"
+    ElseIf MonName = "Sep" Then
+        MonName = "09"
+    ElseIf MonName = "Oct" Then
+        MonName = "10"
+    ElseIf MonName = "Nov" Then
+        MonName = "11"
+    ElseIf MonName = "Dec" Then
+        MonName = "12"
+    Else
+        MsgBox "Please check/revise the month name update and rerun the macro"
+        End
+    End If
+    
+End Sub
+
+Private Sub colordata()
+
+Dim i As Variant
+    i = Selection.Offset(-1, 0).Font.ColorIndex
+If i = 5 Then
+    Selection.Font.ColorIndex = 3
+    Selection.Font.Bold = True
+Else
+    Selection.Font.ColorIndex = 5
+    Selection.Font.Bold = True
+End If
+
+End Sub
+
+Private Sub Add_Dots_D03()
+    Call add_dots_weekdays(2, 8)
+End Sub
+
+Private Sub add_dots_weekdays(anchorcolumn As Integer, lastcolumn As Integer)
+
+    For i = anchorcolumn To lastcolumn
+        Cells(Rows.Count, i).End(xlUp).Activate
+        For j = 1 To 10
+          If IsEmpty(ActiveCell.Offset(-j, 0)) = True Then
+            ActiveCell.Offset(-j, 0) = "."
+          End If
+        Next j
+    Next i
+
+End Sub
+
+Private Sub Divideby()
+Dim Cell As Range
+Dim divider As Double
+
+divider = 100
+
+For Each Cell In Selection
+
+   If IsNumeric(Cell.Value) Then
+       Cell = Cell / divider
+   End If
+
+Next Cell
+
+End Sub
+
+
+' Created By: BAQI
+' Date Created: 14/11/2021
+' Medium For: Excel Macro (VBA)
+
+
